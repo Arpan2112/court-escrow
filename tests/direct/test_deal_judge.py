@@ -365,3 +365,70 @@ def test_state_machine_guards(direct_vm, direct_deploy, direct_alice, direct_bob
     direct_vm.sender = direct_charlie
     with pytest.raises(Exception):
         contract.resolve_case("case-1")
+
+
+# --- v4 hardening gates (ChatGPT round-3 audit conditions) ---
+
+
+def test_http_404_evidence_keeps_disputed_even_with_matching_hash(
+    direct_vm, direct_deploy, direct_alice, direct_bob
+):
+    """An HTTP error page is not evidence: even when the 404 body's hash
+    matches the pin, the status gate must abort the resolution."""
+    contract = _deploy(direct_deploy)
+    _open(direct_vm, contract, direct_alice, direct_bob)
+    body404 = "404 Not Found"
+    hash404 = hashlib.sha256(body404.encode("utf-8")).hexdigest()
+    _deliver(direct_vm, contract, direct_bob, ev_hash=hash404)
+    _dispute(direct_vm, contract, direct_alice)
+    _mock_judge(direct_vm, "RELEASE", body=body404, status=404)
+    direct_vm.sender = direct_alice
+    with pytest.raises(Exception):
+        contract.resolve_case("case-1")
+    assert contract.get_case("case-1")["status"] == "DISPUTED"
+
+
+def test_full_body_hash_verified_beyond_truncation(
+    direct_vm, direct_deploy, direct_alice, direct_bob
+):
+    """Evidence longer than the 6,000-char judge cap: the pinned hash is
+    over the FULL body, so resolution succeeds even though the judge
+    only reads the truncated text."""
+    contract = _deploy(direct_deploy)
+    _open(direct_vm, contract, direct_alice, direct_bob)
+    big_body = "Audit report content. " + ("x" * 7000)
+    big_hash = hashlib.sha256(big_body.encode("utf-8")).hexdigest()
+    _deliver(direct_vm, contract, direct_bob, ev_hash=big_hash)
+    _dispute(direct_vm, contract, direct_alice)
+    _mock_judge(direct_vm, "RELEASE", body=big_body)
+    direct_vm.sender = direct_alice
+    contract.resolve_case("case-1")
+    case = contract.get_case("case-1")
+    assert case["status"] == "RESOLVED"
+    assert case["verdict"] == "RELEASE"
+
+
+def test_none_body_keeps_disputed(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = _deploy(direct_deploy)
+    _open(direct_vm, contract, direct_alice, direct_bob)
+    _deliver(direct_vm, contract, direct_bob)
+    _dispute(direct_vm, contract, direct_alice)
+    direct_vm.mock_web(r".*example\.com/audit-report.*", {"status": 200, "body": None})
+    direct_vm.sender = direct_alice
+    with pytest.raises(Exception):
+        contract.resolve_case("case-1")
+    assert contract.get_case("case-1")["status"] == "DISPUTED"
+
+
+def test_invalid_utf8_body_keeps_disputed(direct_vm, direct_deploy, direct_alice, direct_bob):
+    contract = _deploy(direct_deploy)
+    _open(direct_vm, contract, direct_alice, direct_bob)
+    _deliver(direct_vm, contract, direct_bob)
+    _dispute(direct_vm, contract, direct_alice)
+    direct_vm.mock_web(
+        r".*example\.com/audit-report.*", {"status": 200, "body": b"\xff\xfe\x00binary"}
+    )
+    direct_vm.sender = direct_alice
+    with pytest.raises(Exception):
+        contract.resolve_case("case-1")
+    assert contract.get_case("case-1")["status"] == "DISPUTED"
