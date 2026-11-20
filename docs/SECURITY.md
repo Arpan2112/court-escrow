@@ -28,13 +28,17 @@ attacker-controlled (a seller chooses the evidence URL). Defences:
    evidence page down gains nothing. UNDETERMINED is reachable only when
    no evidence URL was provided at all, or when the judge read real,
    hash-valid evidence and found it genuinely inconclusive.
-4. **Consensus covers the verdict token only.** `resolve_case` runs its
-   fetch + judgement under `gl.eq_principle.strict_eq` on the single
-   verdict string (RELEASE / REFUND / UNDETERMINED). The explanation
-   (criteria results, summary) is generated afterwards by the leader as
-   non-authoritative information and can never alter the verdict.
-   EvidenceGuard likewise validates its verdict against a closed set
-   under strict_eq.
+4. **Consensus covers the verdict token only.** `resolve_case` runs ALL
+   of its nondeterministic work inside a single leader/validator block
+   (`gl.vm.run_nondet_unsafe`). The leader fetches and verifies the
+   evidence, judges it, and drafts the explanation (criteria results,
+   summary) as non-authoritative information. Each validator
+   independently re-fetches, re-verifies, and re-judges the evidence and
+   accepts only if its own verdict equals the leader's — so consensus
+   covers only the verdict token (RELEASE / REFUND / UNDETERMINED) and
+   the explanation can never alter the outcome. Storage writes happen
+   only after the block returns. EvidenceGuard likewise validates its
+   verdict against a closed set under strict_eq.
 5. **Input caps.** Claims, agreements, criteria, manifests, and reasons
    are length-capped; criteria are validated as a 1–10 item string list at
    case opening and again at resolution.
@@ -67,7 +71,7 @@ attacker-controlled (a seller chooses the evidence URL). Defences:
 - The demo relay is a trusted operator (see ARCHITECTURE.md). The verdict
   is public on GenLayer, so a relay that forwards a different decision
   than the recorded verdict is detectable after the fact.
-- `strict_eq` covers only the single verdict token: validator disagreement
+- Consensus covers only the single verdict token: validator disagreement
   on that token fails the resolution transaction rather than recording a
   contested verdict. Retrying is safe (the case stays DISPUTED until a
   resolution succeeds).
@@ -77,10 +81,16 @@ attacker-controlled (a seller chooses the evidence URL). Defences:
 `tests/direct/test_evidence_guard.py` (9 tests) includes the agreed
 regression set: supported / contradicted / insufficient evidence, a
 prompt-injection page, over-long claim, disallowed URL, empty page, and
-malformed AI output. `tests/direct/test_deal_judge.py` (14 tests) covers
+malformed AI output. `tests/direct/test_deal_judge.py` (21 tests) covers
 the lifecycle, both verdict paths, the genuine-UNDETERMINED path, the
-state machine guards, and the audit failure paths: seller-triggered
+state machine guards, the audit failure paths (seller-triggered
 resolution against an HTTP 503 endpoint, empty evidence page, evidence
 hash mismatch, and malformed judge output — all of which must leave the
-case DISPUTED. Full suite: 23/23 passing; genvm-lint passes on both
-contracts.
+case DISPUTED), the seller-address input boundary matrix (Address /
+hex string / integer / leading-zero integer accepted; bool, negative,
+oversized, garbage, and wrong-length inputs rejected), and the
+leader/validator consensus gates (validator accepts matching RELEASE
+and REFUND verdicts, rejects a mismatched verdict, rejects when its own
+evidence fetch fails, and an explanation failure leaves the verdict
+intact with an empty explanation). Full suite: 73/73 passing;
+genvm-lint exits 0 on both contracts.
