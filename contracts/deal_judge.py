@@ -179,8 +179,18 @@ class DealJudge(gl.Contract):
             raise gl.vm.UserError("evidence_url too long")
         if evidence_url and not self._url_allowed(evidence_url):
             raise gl.vm.UserError("evidence_url must be https and on the host allowlist")
-        if evidence_hash and (len(evidence_hash) != 64 or not evidence_hash.isalnum()):
-            raise gl.vm.UserError("evidence_hash must be a sha256 hex string or empty")
+        if evidence_url:
+            # A URL without a valid pinned hash would let the seller swap
+            # the evidence after delivery — the hash is mandatory here.
+            valid_hash = (
+                isinstance(evidence_hash, str)
+                and len(evidence_hash) == 64
+                and all(c in "0123456789abcdefABCDEF" for c in evidence_hash)
+            )
+            if not valid_hash:
+                raise gl.vm.UserError("valid SHA-256 evidence hash required")
+        elif evidence_hash:
+            raise gl.vm.UserError("evidence hash requires an evidence URL")
 
         case.delivery_manifest = manifest
         case.delivery_hash = delivery_hash
@@ -242,6 +252,9 @@ class DealJudge(gl.Contract):
         def adjudicate() -> str:
             content = self._fetch_evidence(evidence_url)
             if evidence_hash:
+                # The pinned hash is over the fetched content as truncated
+                # by _fetch_evidence (MAX_CONTENT_CHARS) — clients must pin
+                # sha256 of that same representation.
                 digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
                 if digest != evidence_hash:
                     raise gl.vm.UserError(
