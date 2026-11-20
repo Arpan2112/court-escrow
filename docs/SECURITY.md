@@ -40,13 +40,18 @@ attacker-controlled (a seller chooses the evidence URL). Defences:
 6. **Allowlists on both contracts.** EvidenceGuard and DealJudge only
    fetch `https://` URLs whose host is on the constructor allowlist
    (exact host match). Fetched content is truncated to 6,000 chars.
-7. **Evidence integrity.** At delivery the seller pins the sha256 of the
-   evidence content; adjudication re-computes it over the fetched
-   content and aborts on mismatch (page swapped after delivery = failed
-   retrieval = case stays DISPUTED). Note: redirect behaviour is a
-   property of the GenVM web renderer, not something the contract can
-   inspect; the allowlist binds the submitted URL and the hash pins the
-   content actually judged.
+7. **Evidence integrity.** When a delivery carries an evidence URL, a
+   valid sha256 hash is MANDATORY (a URL with an empty or non-hex hash
+   is rejected at delivery, as is a hash without a URL — both gaps were
+   found in post-deploy audit and patched). At delivery the seller pins
+   the sha256 of the evidence content; adjudication re-computes it over
+   the fetched content and aborts on mismatch (page swapped after
+   delivery = failed retrieval = case stays DISPUTED). The hash is over
+   the content as fetched and truncated to 6,000 chars — clients must
+   pin the hash of that same representation. Note: redirect behaviour
+   is a property of the GenVM web renderer, not something the contract
+   can inspect; the allowlist binds the submitted URL and the hash pins
+   the content actually judged.
 8. **Role checks.** Delivery only by the seller, dispute/accept only by
    the buyer, resolution only by a party to the case. State machine is
    enforced (`OPEN → DELIVERED → DISPUTED → RESOLVED`, or
