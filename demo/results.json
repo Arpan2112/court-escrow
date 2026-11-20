@@ -1,0 +1,200 @@
+{
+ "actors": {
+  "base_buyer": "0x9B062f6c8C28053F554a62196aA5f7639482bEc8 (wallet2 profile)",
+  "base_oracle_relay": "0x91e8A2459CE827b8D2CF1a5D7E50B092D8FA3Ad3 (wallet2 profile)",
+  "base_seller": "0x967bC1E80d448c6C4F4CB112b18Ee4B3A1219976 (burner)",
+  "genlayer_buyer": "0x967bC1E80d448c6C4F4CB112b18Ee4B3A1219976 (VM MetaMask burner, 'Testnet muse')",
+  "genlayer_seller": "0xdE12e70Aab8E6A030412200B328438BB7c2ead88 (GenLayer Studio local account; signs as itself ONLY when the account is switched via the Studio menu without a page reload — localStorage+reload sessions signed as ephemeral addresses 0x1FeAF581c316182Ba6C7ea288606493F70Ebe588 and 0xB0193c14E87D0a59b40f69A436296B0798c221c7, which is why the ce-*-2 and ce-*-3 case sets are dead ends)"
+ },
+ "cases": {
+  "ce-accepted-1": {
+   "base": {
+    "amount_wei": "2000000000000000",
+    "collect": "ROOT CAUSE FOUND AND FIXED (21 Nov ~00:50 WIB): the escrow demand was FLAT abi.encode(address, bytes) (128 bytes). The arbiter's abi.decode(demand, (DemandData)) expects the NESTED form abi.encode(DemandData) (160 bytes, leading 0x20 tuple offset) — with the flat form it reads the oracle address as a tuple offset and reverts (oracle=0 accidentally decodes, which is why zero-input probes passed). Proof: decodeDemandData(nested) returns the exact (oracle, context); check(attestation, nested demand) == true for this very escrow. The escrow's demand is immutable in its attestation, so this escrow itself can never collect; its 0.002 ETH is reclaimable by the buyer after expiry 1795784903 (~27 Nov 2026). The corrected encoding is proven end-to-end by the ce-release-v4 escrow (collect tx 0x245dedc6...). Hypothesis by ChatGPT round 5; the 'partner defect' and 'version skew' framings are both RETRACTED — it was our encoding.",
+    "escrow_tx": "0x8abed0fd190f6d6d661c26576e2925da9cf89d390405f936694d62708a652068",
+    "escrow_uid": "0x7b0c4181fc6637bdff9745e00f0c5d2d383c4e141ba2e457321fd2d2e5457b9b",
+    "expiry_unix": 1795784903,
+    "fulfillment_uid": "0x4618dd69afd1934ef2ad341767652a38e859f832c9dfe34a53799e70965b002b",
+    "relay": "DONE — arbitrate(true) by oracle 0x91e8...A3Ad3, tx 0xbd8c199f98f63da3557bf0334617d492bd0bd1ec42049c9bc0140cee42722689, status 0x1, ArbitrationMade event present. Relayed decision = verdict read from get_case() (RELEASE via buyer accept)."
+   },
+   "genlayer": {
+    "delivery": "complete evidence (delivery-complete.md, sha256 cf7050d0c396dfc239977a4a57181f0569e9a9c5063c0422eb51d6a4776158ed)",
+    "open_nonce": 16,
+    "status": "RESOLVED",
+    "verdict": "RELEASE",
+    "verdict_path": "accept_delivery by buyer (no LLM)"
+   },
+   "scenario": "A — buyer accepts delivery, no judging"
+  },
+  "ce-refund-1": {
+   "base": {
+    "amount_wei": "2000000000000000",
+    "collect": "correctly impossible — collect eth_call reverts after arbitrate(false); selector 0x1ab7da6b (see version-skew note on ce-accepted-1)",
+    "escrow_tx": "0x8492419c38fd0c4aed6ca5398bb49a24f99e308829ca2782f648a2207f590d70",
+    "escrow_uid": "0xf843faac381907310899056af6755503f806da9ea7a988d918362b763c9d6827",
+    "expiry_unix": 1795181621,
+    "fulfillment_tx": "0x94f5f5d4d9d8119e0f8b8d0b46480817d29c56343500f982992c90f5cc019712",
+    "fulfillment_uid": "0x0ca82ed853476962de4500424e4023d3a2ad4d56f350ce5efdbdd02156037498",
+    "reclaim": "DONE — buyer reclaim tx 0x45c5170a7fb7441b8ed959a359ae9c2adcc226d7573f3f292b79700d66b7cba3, status 0x1, EscrowReclaimed present; 0.002 ETH returned to buyer 0x9B06...bEc8",
+    "relay": "DONE — arbitrate(false) by oracle 0x91e8...A3Ad3, tx 0xde5a052d3a184fa1bfef1a4dbd03295e97b16b3c0231629c3caeeebd1f2223fa, status 0x1, ArbitrationMade present. Relayed decision = verdict read from get_case() (REFUND via full consensus)."
+   },
+   "genlayer": {
+    "criteria_results": "all 3 criteria FAIL",
+    "delivery": "incomplete evidence (delivery-incomplete.md, sha256 ac158c89c14c9a17589346189437539ee57dc5f2c201940ee14b56b2178cc575)",
+    "explanation_label": "Leader-generated explanation — non-authoritative (per ChatGPT audit note)",
+    "open_nonce": 18,
+    "status": "RESOLVED",
+    "summary": "The REFUND verdict is supported because the delivery note lists only the logo SVG and says the remaining work will follow later. It also omits a test summary stating all checks passed and an MIT license statement.",
+    "verdict": "REFUND",
+    "verdict_path": "resolve_case, full consensus (leader + validators fetched and judged the evidence independently)"
+   },
+   "scenario": "C — dispute over incomplete evidence, judged REFUND"
+  },
+  "ce-release-1": {
+   "base": {
+    "amount_wei": "2000000000000000",
+    "collect": "n/a until verdict; escrow reclaimable by buyer after expiry (1795784903)",
+    "escrow_tx": "0xc825b3e62643aa2e138b96025e20ddbf98d753358f450c3d4452255afe6ba079",
+    "escrow_uid": "0xcbdb08a7073a53949b71cc008c71760fe08f1bf063dfb5da0503ca2402fd744f",
+    "expiry_unix": 1795784903,
+    "fulfillment_uid": "",
+    "relay": "BLOCKED — no recorded verdict to relay (relay forwards only the verdict read from get_case)"
+   },
+   "genlayer": {
+    "delivery": "complete evidence (delivery-complete.md, sha256 cf7050d0c396dfc239977a4a57181f0569e9a9c5063c0422eb51d6a4776158ed)",
+    "dispute_reason": "The delivery looks incomplete to me - the icon set count and the license are unclear from the package summary.",
+    "open_nonce": 17,
+    "resolve_attempts": "5 broadcast attempts (4 full-consensus + 1 leader-only), all FINISHED_WITH_ERROR; Studio consensus logs show 'Majority disagreement, rotating the leader'. A parallel fresh case (ce-release-9) with a neutral dispute reason failed identically, ruling out dispute wording. The incomplete-evidence case judged fine, so the failure is specific to resolving THIS evidence file. Case remains DISPUTED and retryable by design. ChatGPT ruling (20 Nov): do NOT retry blindly — first run a no-LLM probe_render diagnostic (rendered length + sha256 of web.render output vs the pinned hash); if mismatch, switch the fetch to gl.nondet.web.get + body decode and redeploy.",
+    "status": "DISPUTED",
+    "verdict": ""
+   },
+   "scenario": "B — dispute over complete evidence, expected RELEASE by judging"
+  },
+  "ce-release-9": {
+   "genlayer": {
+    "base": "no escrow (control case, GenLayer only)",
+    "dispute_reason": "Please verify this delivery against the agreed criteria before the escrow is released.",
+    "resolve_attempts": "1 full-consensus attempt, FINISHED_WITH_ERROR — same failure as ce-release-1, confirming the fault is not the dispute wording",
+    "status": "DISPUTED",
+    "verdict": ""
+   },
+   "scenario": "B-control — same complete evidence, neutral dispute reason"
+  },
+  "ce-undet-1": {
+   "base": {
+    "amount_wei": "2000000000000000",
+    "collect": "correctly impossible — no arbitrate call was ever made for UNDETERMINED; collect eth_call reverts (selector 0x1ab7da6b, see version-skew note on ce-accepted-1)",
+    "escrow_tx": "0x88a66967f33ce066810b2b13a2db75415518c48149a8d7ddce354fd07bb404c3",
+    "escrow_uid": "0x98b7c86e58b81d457d836117e9d97a3fc9f5b1a53af06da0a7919a625434933a",
+    "expiry_unix": 1795182527,
+    "fulfillment_uid": "0x76649e3910e4bf54471abc3002fe68f9e639fe6388d2dad25f2d751fdc26ccea",
+    "reclaim": "DONE — buyer reclaim tx 0xd4b1c971436c9765f5bab645e04fecc43561fafccc0685a215b0e2c6dfae474f, status 0x1, EscrowReclaimed present; 0.002 ETH returned to buyer 0x9B06...bEc8",
+    "relay": "NONE by design — UNDETERMINED is never relayed as a decision"
+   },
+   "genlayer": {
+    "open_nonce": 19,
+    "status": "RESOLVED",
+    "summary": "No evidence URL was provided; nothing to judge.",
+    "verdict": "UNDETERMINED",
+    "verdict_path": "resolve_case, deterministic path (no evidence URL → no judging)"
+   },
+   "scenario": "D — dispute with no evidence URL, deterministic UNDETERMINED"
+  },
+  "ce-release-v4": {
+   "scenario": "B-rerun on DealJudge v4 (disputed delivery, complete evidence) — the scenario that was impossible on v3",
+   "genlayer": {
+    "contract": "0xC4feD4c49aE86Ec1A9803694A0EA0E677a15C2F3",
+    "resolve_tx": "0x0cbdb85f3a7268c311b01786d6bc2b8d997a31706598189dc518cc16d5a6a4f9",
+    "outcome": "RESOLVED / RELEASE via full leader/validator consensus — all 3 criteria PASS. Summary (leader-generated, non-authoritative): the delivery note lists all three deliverables, states all checks passed, and specifies the MIT license.",
+    "smoke_test_value": "This resolve also proves live on Studio Next that resp.status == 200 gating and the full-body sha256 check work in production GenVM, not only in direct-mode tests."
+   },
+   "base": {
+    "escrow_tx": "0xd964628726da796a5618d269d19510c8bd60c5553ace513d6980aa768a7a546f",
+    "escrow_uid": "0xada1211f9b0dbe1e0337ab799b6022924f13eb2e54184f596af449af19dc53fd",
+    "demand_encoding": "NESTED abi.encode(DemandData) — 160 bytes, verified decodable on-chain",
+    "fulfillment_tx": "0xd48b1be1b4c858b6e014287110d845e40dadc15ab9f4bd6d536b8079ec67a23b",
+    "fulfillment_uid": "0xaf496a9d3b5f03e6ba92e5928c5b82523c35ef21707ca73c976ddf929e8f950c",
+    "arbitrate_tx": "0xc726dccd36c209dcff67f5b38aeb01175e737736b37169cf3a9ff8fb74f8de33",
+    "check_before_collect": "check() == true with the nested demand",
+    "collect_tx": "0x245dedc61ce391e8c21585581b2beef59e5256eaadd1eec378558238174db781",
+    "collect_outcome": "SUCCESS — seller balance 0.00999545 -> 0.01199545 ETH (exactly +0.002 ETH); escrow attestation revoked. THE FULL RELEASE LOOP IS NOW PROVEN END-TO-END."
+   }
+  }
+ },
+ "dead_end_cases": {
+  "ce-accepted-2": "seller 0x1FeAF581c316182Ba6C7ea288606493F70Ebe588",
+  "ce-accepted-3": "seller 0xB0193c14E87D0a59b40f69A436296B0798c221c7",
+  "ce-refund-2": "seller 0x1FeAF581c316182Ba6C7ea288606493F70Ebe588 (one delivery attempt tx 0xb8f11f2a77e36edd7f7bcc08c0df3b8f382324062eb06edc44928672d9b35740 FINISHED_WITH_ERROR — sender was the case seller of the -1 set, not this case)",
+  "ce-refund-3": "seller 0xB0193c14E87D0a59b40f69A436296B0798c221c7",
+  "ce-release-2": "seller 0x1FeAF581c316182Ba6C7ea288606493F70Ebe588",
+  "ce-release-3": "seller 0xB0193c14E87D0a59b40f69A436296B0798c221c7",
+  "ce-undet-2": "seller 0x1FeAF581c316182Ba6C7ea288606493F70Ebe588",
+  "ce-undet-3": "seller 0xB0193c14E87D0a59b40f69A436296B0798c221c7",
+  "note": "Opened with ephemeral Studio session signers as seller (see actors.genlayer_seller); deliveries can never be made for them. Kept on-chain as artifacts; case ids cannot be reused."
+ },
+ "dealjudge_v3": "0x7934c9A0a1Dd4D20759676B82690a93d8FF02Ca1",
+ "dealjudge_v3_deploy_tx": "0x10210253927d42ed491222d91314a2e881340742705e3e14729221912cea6cb6",
+ "dealjudge_v3_source_sha256": "91bcbb4e7b079e70e7cb95681c76e2fb0c86f01c8c48103dd93df03f5acadffb",
+ "evidence_guard": "0x45f7Fe4DA9640457c9411b736E262675DF011A64",
+ "evidenceguard_probe": {
+  "check_id": "probe-complete-1",
+  "observed_state": "get_check still PENDING minutes later — the eth-view execution label and the applied state disagree on this dev network; treat on-chain reads, not tx labels, as truth",
+  "submit_tx": "0x0ff3490d5834834d156eb6152d3f9f5665698cf1c251f5892f429f61c56328f9 (FINISHED_WITH_RETURN)",
+  "url": "https://raw.githubusercontent.com/Arpan2112/court-escrow/main/demo/evidence/delivery-complete.md",
+  "verify_tx": "0x59354be89dbe570bdd3fbec195a45bc2f17a4137ae84ef5243a7592e22039da0 (FINISHED_WITH_RETURN in the eth view)"
+ },
+ "funding": {
+  "base_buyer_to_burner": "0.01 ETH Base Sepolia, tx 0x5284f776a754fcf5a852f2264c1c83f497fd50a161f9293b447744d5cbe1546d",
+  "base_buyer_to_oracle": "0.005 ETH Base Sepolia, tx 0x06342cdeb825795e137a3e21e3e1022ebdc76febec12bb06a97dab23a1c14046",
+  "signer_0x1FeA_gen": "0.2 GEN from burner (MetaMask nonce 20) — funded before the menu-switch signing behaviour was understood; the address turned out to be an ephemeral Studio session signer"
+ },
+ "generated": "2026-11-21 ~00:55 WIB — COURTESROW COMPLETE end-to-end: 4 GenLayer verdict paths + full Alkahest settlement (escrow/fulfill/arbitrate/collect) + buyer reclaims. Remaining: README, report.html, video, builder-wg ticket, portal submission (deadline Mon 23 Nov 06:59 WIB)",
+ "operational_findings": [
+  "resolve_case carries a 0.1 GEN consensus deposit; the burner (0.048 GEN after funding attempts) could not pay it, so MetaMask flagged an estimatedFee danger alert and hid the Confirm button behind 'Review alert'. Buyer-side disputes/accepts are cheap; resolves were run from the seller (Studio local account, 0.25 GEN).",
+  "GenLayer Bradbury faucet requires 0.01 ETH on mainnet — not used (no mainnet funds for testnet GEN, per rules).",
+  "Studio account switching must be done via the in-page account menu (mouse click on the row). localStorage edits + reload change the local signing identity to an ephemeral address.",
+  "Both VM wallet browsers crashed once this evening (~20:08 WIB); profile 9333 recovered via start.sh. Profile 9334 (wallet2) was REPAIRED ~21:44 WIB: the Chrome launch failures (SIGTRAP) were caused by a missing DISPLAY environment variable in the launch shells — starting wallet2-daemon.js with DISPLAY=:99 (Xvfb) in tmux brought it straight up. The Base relay, arbitrations, and reclaims then completed the same evening.",
+  "Base collect anomaly (20 Nov late evening): seller collect for the RELEASE case reverts with no error data via public-RPC eth_call, and direct arbiter check()/decodeDemandData() probes revert under the vendored ABI — while arbitrate() works and emits the vendored event. C/D collects revert with selector 0x1ab7da6b != vendored InvalidFulfillment() 0x1d7cb1de. Leading hypothesis: deployed Alkahest contracts differ from the vendored repo sources (version skew). All attestation-level data (schemas, refUIDs, recipients, revocable flags) verified correct on-chain.",
+  "ChatGPT audit of the live-fire results (20 Nov 21:41-21:49 WIB, same conversation): B must NOT be retried blindly — first run a no-LLM probe_render diagnostic (rendered length + sha256 vs pinned hash); if mismatch, switch the contract fetch to gl.nondet.web.get + body decode and redeploy. A buyer's-accept RELEASE must never be conflated with a judged RELEASE. If the Base relay were still blocked at the deadline, submit anyway with honest disclosure. NOTE: the relay blockage ChatGPT assumed was already repaired minutes before its reply landed; arbitrate + reclaims are done. Its B-diagnosis plan stands.",
+  "ChatGPT round 2 (20 Nov 21:54-22:05 WIB) CORRECTED the version-skew hypothesis, verified locally the same evening: selector 0x1ab7da6b IS DeadlineExpired() (keccak-verified), so C/D collect reverts are normal Alkahest behaviour for expired escrows — NOT version skew. Tes 1 (addresses vs official manifest): StringObligation, TrustedOracleArbiter, EAS all match. Tes 3 (decision context): PASS — arbitrate used the inner context, event decisionKey matches check()'s lookup key exactly. Tes 4 (debug_traceCall): blocked on public RPC. ChatGPT also specified the B probe in full (web.get vs web.render comparison incl. newline/CRLF/whitespace stats, judge-output stage codes, cross-validator hash consistency) — accepted as the probe design.",
+  "ChatGPT round 4 (20 Nov 22:37 WIB): v4 APPROVED for deploy. Its caution on Alkahest was vindicated the same night: the deployed TrustedOracleArbiter runtime bytecode is BYTE-IDENTICAL to the vendored artifact (keccak 4d6d2923e3b400f0761503bc... both) — version skew DISPROVEN. Further fuzzing: check()/decodeDemandData() exist and parse (zero/minimal inputs succeed and return values), but revert whenever the demand's first word is the real oracle address 0x91e8... — under BOTH (address, bytes) and (bytes, address) encodings. The deployed demand semantics remain uncracked; next step is the alkahest repo's git history (deployment-era DemandData) — carried into ChatGPT round 5. The 'partner deployment defect' wording in the collect note above is SUPERSEDED by this bytecode-identity result: the defect framing is withdrawn pending round 5."
+ ],
+ "render_probe": {
+  "address": "0xe76195AA769468f3Ac0e91d2E819724e1FC53601",
+  "deploy_tx": "0x3685a787a63838b99d7e96e79307179f7f0b1e103fd4bdc4166a99a36287fcf8",
+  "probe_tx_b_complete_1": "0xc496aef786334ff41aee1a80a2a9526a9c2bc9e06b00e3940897410f52925d34",
+  "source_sha256": "5ddf3074b3663afd9b9fcbcd78d9ca9f80e2cf3a8d6220cf76e12c7503ba8253",
+  "result_for_delivery_complete": {
+   "web_get": {
+    "length": 706,
+    "sha256": "cf7050d0c396dfc239977a4a57181f0569e9a9c5063c0422eb51d6a4776158ed",
+    "matches_pin": true,
+    "newlines": 22,
+    "crlf": 0,
+    "trailing_newline": true
+   },
+   "web_render": {
+    "length": 703,
+    "sha256": "99ae89975358aef739f5b29f75c42ef081506ba3f632091cbce6749f5423c6aa",
+    "matches_pin": false,
+    "newlines": 22,
+    "crlf": 0,
+    "trailing_newline": true
+   }
+  },
+  "conclusion": "ROOT CAUSE OF SCENARIO B FOUND: web.render normalizes the fetched text (703 vs 706 chars), so the seller-pinned raw-file sha256 can never match inside DealJudge v3's resolve — the leader aborts deterministically on every node and every mode. The probe tx itself passed full consensus with strict cross-validator recomputation, proving fetches are consistent across validators; only the representation differs. Fix: DealJudge v4 fetches via web.get (raw body)."
+ },
+ "dealjudge_v4": {
+  "change": "_fetch_evidence uses gl.nondet.web.get(url) + body.decode('utf-8') instead of gl.nondet.web.render",
+  "source_sha256": "bf9d5c82498776a3891befa3f0b51f5aa45db421ad1b1fd621ba60050fe2992f",
+  "tests": "full direct suite 75/75 (incl. 2 new RenderProbe tests)",
+  "lint": "genvm-lint PASS (DealJudge + RenderProbe)",
+  "status": "HARDENED per ChatGPT round-3 conditions (status==200 gate, bytes-only body, strict UTF-8, full-body sha256 before truncation, str() fallback removed). Suite 79/79 incl. all six audit conditions + >6000-char full-body-hash test; lint PASS; final sha256 d5e4ffbb01dfc87e65f7c3400a86474e366ffe26fdf14f18d26589d760c4a278; pushed + verified byte-identical on GitHub. ChatGPT round-4 final deploy approval requested 20 Nov ~23:05 WIB.",
+  "deployment": {
+   "address": "0xC4feD4c49aE86Ec1A9803694A0EA0E677a15C2F3",
+   "deploy_tx": "0xf839b256c127ea70765d72c6fed3f18f6a182a6715b20afbcbafbe8e82a27811",
+   "status": "FINALIZED, FINISHED_WITH_RETURN, deployed code byte-identical to the ChatGPT-approved source (sha256 d5e4ffbb...)",
+   "chatgpt_approval": "Round 4, 20 Nov 22:37 WIB — APPROVED for deploy + scenario B rerun"
+  }
+ }
+}
