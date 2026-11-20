@@ -119,6 +119,27 @@
     "collect_tx": "0x245dedc61ce391e8c21585581b2beef59e5256eaadd1eec378558238174db781",
     "collect_outcome": "SUCCESS — seller balance 0.00999545 -> 0.01199545 ETH (exactly +0.002 ETH); escrow attestation revoked. THE FULL RELEASE LOOP IS NOW PROVEN END-TO-END."
    }
+  },
+  "ce-refund-v4": {
+   "scenario": "REFUND acceptance test with CORRECTED nested demand encoding (ChatGPT round-6 P0 recommendation)",
+   "genlayer": {
+    "contract": "0xC4feD4c49aE86Ec1A9803694A0EA0E677a15C2F3",
+    "outcome": "RESOLVED / REFUND via full leader/validator consensus on DealJudge v4 — all 3 criteria FAIL",
+    "summary_note": "Leader-generated explanation — non-authoritative."
+   },
+   "base": {
+    "escrow_tx": "0x44243ce7d9708c4bf5aefe91166a19d6fbc3c48c62ba68d4afa4be64b09e9919",
+    "escrow_uid": "0x92435177e88c56710c488cd887c3b4c06eafcb86bea7a711722c702edea1dee0",
+    "demand_encoding": "NESTED abi.encode(DemandData)",
+    "expiry_unix": 1795195697,
+    "fulfillment_tx": "0xa44c46dc6f4d0333642f8f3643e2a4c53c86777b46280c681d9ec74f1217a780",
+    "fulfillment_uid": "0xed83bee8c4cf71fdc9fb60a6658c85fa5872fce4a7172f62f3ba929077586ef4",
+    "arbitrate_tx": "0x024caa364bec099adb7953635cb7bfdb1ec6af4a5fa1b566f9b701232cd61a42",
+    "arbitrate_decision": false,
+    "check_result": "check() == FALSE (returned 0, no revert) — the arbiter correctly decoded the nested demand and the negative decision",
+    "collect_sim": "eth_call collect reverts with 0x1d7cb1de (InvalidFulfillment) — seller cannot collect on a REFUND, as designed",
+    "reclaim": "PENDING — buyer reclaim after expiry 1795195697 (21 Nov 2026 00:28:17 WIB)"
+   }
   }
  },
  "dead_end_cases": {
@@ -148,7 +169,7 @@
   "base_buyer_to_oracle": "0.005 ETH Base Sepolia, tx 0x06342cdeb825795e137a3e21e3e1022ebdc76febec12bb06a97dab23a1c14046",
   "signer_0x1FeA_gen": "0.2 GEN from burner (MetaMask nonce 20) — funded before the menu-switch signing behaviour was understood; the address turned out to be an ephemeral Studio session signer"
  },
- "generated": "2026-11-21 ~00:55 WIB — COURTESROW COMPLETE end-to-end: 4 GenLayer verdict paths + full Alkahest settlement (escrow/fulfill/arbitrate/collect) + buyer reclaims. Remaining: README, report.html, video, builder-wg ticket, portal submission (deadline Mon 23 Nov 06:59 WIB)",
+ "generated": "2026-11-20 ~23:32 WIB — nested REFUND test: GenLayer REFUND on v4 + arbitrate(false) + check()==false + collect blocked (InvalidFulfillment) all verified; buyer reclaim scheduled at escrow expiry 00:28 WIB",
  "operational_findings": [
   "resolve_case carries a 0.1 GEN consensus deposit; the burner (0.048 GEN after funding attempts) could not pay it, so MetaMask flagged an estimatedFee danger alert and hid the Confirm button behind 'Review alert'. Buyer-side disputes/accepts are cheap; resolves were run from the seller (Studio local account, 0.25 GEN).",
   "GenLayer Bradbury faucet requires 0.01 ETH on mainnet — not used (no mainnet funds for testnet GEN, per rules).",
