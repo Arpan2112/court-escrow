@@ -1,0 +1,20 @@
+{
+ "agreement": "Brand starter pack: logo SVG, landing page copy, and a 24-icon set, delivered as one package paid from a 0.002 ETH Alkahest escrow on Base Sepolia. Disputes are judged by the DealJudge intelligent contract on GenLayer against the agreed criteria.",
+ "criteria": [
+  "The delivery note lists all three deliverables: logo SVG, landing page copy, and icon set.",
+  "The delivery note includes a test summary stating all checks passed.",
+  "The delivery note states the license as MIT."
+ ],
+ "evidence": {
+  "complete_url": "https://raw.githubusercontent.com/Arpan2112/court-escrow/main/demo/evidence/delivery-complete.md",
+  "complete_sha256": "cf7050d0c396dfc239977a4a57181f0569e9a9c5063c0422eb51d6a4776158ed",
+  "incomplete_url": "https://raw.githubusercontent.com/Arpan2112/court-escrow/main/demo/evidence/delivery-incomplete.md",
+  "incomplete_sha256": "ac158c89c14c9a17589346189437539ee57dc5f2c201940ee14b56b2178cc575"
+ },
+ "results": {},
+ "genlayer_actor": "0x967bC1E80d448c6C4F4CB112b18Ee4B3A1219976",
+ "genlayer_actor_note": "Studio UI path (genlayer-py writes revert on Studio Next fee-aware consensus). GenLayer buyer = VM MetaMask burner; GenLayer seller = Studio local account (open_case forbids buyer==seller). Base Sepolia side keeps 3 distinct accounts (buyer 0x9B06..., seller burner, oracle 0x91e8...). Full demo state lives in demo/results.json.",
+ "genlayer_buyer": "0x967bC1E80d448c6C4F4CB112b18Ee4B3A1219976",
+ "genlayer_seller": "0xdE12e70Aab8E6A030412200B328438BB7c2ead88",
+ "genlayer_seller_note": "Studio-local account holding 0.25 GEN. SIGNING DISCLOSURE (found 20 Nov evening): the Studio signs local-account transactions as this address ONLY when the account is selected via the in-page account menu without a page reload. Sessions switched via localStorage + reload signed as ephemeral addresses (0x1FeAF581..., 0xB0193c14...) instead — the ce-*-2 / ce-*-3 case sets were opened with those ephemeral signers as seller and can never receive deliveries; the live demo set is ce-*-1."
+}
