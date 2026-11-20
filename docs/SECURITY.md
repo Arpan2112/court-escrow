@@ -16,10 +16,11 @@ attacker-controlled (a seller chooses the evidence URL). Defences:
    signal to answer INSUFFICIENT / UNDETERMINED.
 2. **Closed output sets.** Verdicts are validated on-chain against a fixed
    set (`SUPPORTED/CONTRADICTED/INSUFFICIENT`,
-   `RELEASE/REFUND/UNDETERMINED`). Anything else — including a model that
-   was successfully manipulated into inventing a new token — is coerced to
-   the safe outcome (INSUFFICIENT / UNDETERMINED), never to a favourable
-   one. Malformed JSON degrades the same way.
+   `RELEASE/REFUND/UNDETERMINED`). In EvidenceGuard, anything else —
+   including a model manipulated into inventing a new token, or malformed
+   JSON — is coerced to INSUFFICIENT, never to a favourable outcome. In
+   DealJudge, malformed or out-of-set judge output instead ABORTS the
+   resolution (see 3): no verdict is recorded at all.
 3. **Failures never become verdicts.** In DealJudge, a retrieval failure
    (HTTP error, empty page, render exception), an LLM failure, malformed
    judge output, or an evidence-hash mismatch ABORTS the resolution: the
@@ -66,10 +67,10 @@ attacker-controlled (a seller chooses the evidence URL). Defences:
 - The demo relay is a trusted operator (see ARCHITECTURE.md). The verdict
   is public on GenLayer, so a relay that forwards a different decision
   than the recorded verdict is detectable after the fact.
-- `strict_eq` on free-text-adjacent JSON is strict: validator disagreement
-  on the model output fails the resolution transaction rather than
-  recording a contested verdict. Retrying is safe (the case stays
-  DISPUTED until a resolution succeeds).
+- `strict_eq` covers only the single verdict token: validator disagreement
+  on that token fails the resolution transaction rather than recording a
+  contested verdict. Retrying is safe (the case stays DISPUTED until a
+  resolution succeeds).
 
 ## Test coverage
 
