@@ -53,6 +53,24 @@ npm run verify
 GenLayer Studio Next (chain 61997) + Base Sepolia only. Burner wallets,
 testnet assets only, no mainnet, no real funds, no secrets in this repo.
 
+## Deployments — GenLayer Studio Next (chain 61997)
+
+Deployed from the project's testnet burner wallet via GenLayer Studio
+Dev; both deploy transactions reached FINALIZED and both contracts
+answer read calls (initial counters verified 0).
+
+| Contract | Address | Deploy tx |
+| --- | --- | --- |
+| EvidenceGuard | `0x45f7Fe4DA9640457c9411b736E262675DF011A64` | `0x40d98b03052b5b14f31f5ddff2eb55980c96878fda6a9230ba6702048c63fa7a` |
+| DealJudge (current) | `0x605AEdC0f6F2a07d9CD581a2fDc1d140E2742DeB` | `0xc1c9cd8b40b1367648ad2bcd8b07f26785df2b3998c23651864cbf44feca8219` |
+
+DealJudge was redeployed once after a post-deploy audit found that an
+evidence URL could be delivered without a pinned hash (and that the
+hash check accepted non-hex strings). The patched build makes a valid
+sha256 hash mandatory whenever an evidence URL is present. The first
+DealJudge deployment (`0x89093EF2324E4aa4534A9DCa586Ff70ee6702262`) is
+superseded and unused.
+
 ## Status
 
 Work in progress for Mission 101 (deadline 23 Nov 2026, 06:59 WIB).
