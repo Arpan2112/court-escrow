@@ -30,7 +30,7 @@ from eth_account import Account  # noqa: E402
 from genlayer_py import create_client  # noqa: E402
 from genlayer_py.types import TransactionStatus  # noqa: E402
 
-DEAL_JUDGE = "0x605AEdC0f6F2a07d9CD581a2fDc1d140E2742DeB"
+DEAL_JUDGE = "0xC4feD4c49aE86Ec1A9803694A0EA0E677a15C2F3"
 
 
 def load_client():
