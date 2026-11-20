@@ -138,7 +138,10 @@
     "arbitrate_decision": false,
     "check_result": "check() == FALSE (returned 0, no revert) — the arbiter correctly decoded the nested demand and the negative decision",
     "collect_sim": "eth_call collect reverts with 0x1d7cb1de (InvalidFulfillment) — seller cannot collect on a REFUND, as designed",
-    "reclaim": "PENDING — buyer reclaim after expiry 1795195697 (21 Nov 2026 00:28:17 WIB)"
+    "reclaim": {
+     "tx": "0x06d441489b6977ba26e98b28325c56b5f05353dc5a4bdfaf30ec32c60d316dda",
+     "outcome": "SUCCESS after expiry — buyer balance 0.08699095 -> 0.08899022 ETH (+0.00199927 net of gas)"
+    }
    }
   }
  },
@@ -169,7 +172,7 @@
   "base_buyer_to_oracle": "0.005 ETH Base Sepolia, tx 0x06342cdeb825795e137a3e21e3e1022ebdc76febec12bb06a97dab23a1c14046",
   "signer_0x1FeA_gen": "0.2 GEN from burner (MetaMask nonce 20) — funded before the menu-switch signing behaviour was understood; the address turned out to be an ephemeral Studio session signer"
  },
- "generated": "2026-11-20 ~23:32 WIB — nested REFUND test: GenLayer REFUND on v4 + arbitrate(false) + check()==false + collect blocked (InvalidFulfillment) all verified; buyer reclaim scheduled at escrow expiry 00:28 WIB",
+ "generated": "2026-11-21 ~00:31 WIB — nested REFUND test COMPLETE: every ChatGPT round-6 acceptance step verified on-chain. Demo package complete; remaining: builder-wg (DM @ras = Lexy decision), YouTube Short upload (Lexy), portal submission (deadline Mon 23 Nov 06:59 WIB)",
  "operational_findings": [
   "resolve_case carries a 0.1 GEN consensus deposit; the burner (0.048 GEN after funding attempts) could not pay it, so MetaMask flagged an estimatedFee danger alert and hid the Confirm button behind 'Review alert'. Buyer-side disputes/accepts are cheap; resolves were run from the seller (Studio local account, 0.25 GEN).",
   "GenLayer Bradbury faucet requires 0.01 ETH on mainnet — not used (no mainnet funds for testnet GEN, per rules).",
