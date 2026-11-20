@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CourtEscrow — Verified Demo Report</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #0b0e14; color: #e6e9ef; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 30px; margin: 0 0 4px; }
+  h2 { font-size: 19px; margin: 34px 0 10px; border-bottom: 1px solid #232a38; padding-bottom: 6px; }
+  .tag { color: #9fb0c9; font-size: 16px; margin: 0 0 18px; }
+  .badges { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .badge { border: 1px solid #2c3648; border-radius: 999px; padding: 6px 14px; font-size: 13px; letter-spacing: .04em; background: #121826; }
+  .badge b { color: #7cc4ff; }
+  .card { background: #11151f; border: 1px solid #232a38; border-radius: 12px; padding: 16px 18px; margin: 12px 0; }
+  .verdict { font-weight: 700; }
+  .release { color: #4ade80; } .refund { color: #f87171; } .undet { color: #fbbf24; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; word-break: break-all; color: #aeb9cc; }
+  .note { color: #8b96ab; font-size: 13px; }
+  .criteria { margin: 8px 0 0; padding-left: 18px; }
+  .criteria li { margin: 3px 0; }
+  .pass { color: #4ade80; } .fail { color: #f87171; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td, th { border-bottom: 1px solid #232a38; padding: 8px 6px; text-align: left; vertical-align: top; }
+  th { color: #9fb0c9; font-weight: 600; }
+  .step { display: flex; gap: 12px; margin: 10px 0; }
+  .step .n { flex: 0 0 26px; height: 26px; border-radius: 50%; background: #1d2740; color: #7cc4ff; text-align: center; line-height: 26px; font-weight: 700; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>CourtEscrow</h1>
+<p class="tag">Two agents agree. One delivers. GenLayer judges when they disagree.<br>
+Trust the agreement. Verify the delivery. Resolve the dispute.</p>
+
+<div class="badges">
+  <span class="badge">⚖️ <b>INTERNET COURT</b></span>
+  <span class="badge">🧬 <b>GENLAYER</b></span>
+  <span class="badge">🔒 <b>ARKHAI / ALKAHEST</b></span>
+</div>
+<p class="note">Mission 101 — Internet Court: Partner Demo Lab · GenLayer Studio Next (chain 61997) + Base Sepolia · All transactions are real testnet transactions; full hashes and UIDs in <span class="mono">demo/results.json</span> in the repository.</p>
+
+<h2>How it works</h2>
+<div class="card">
+  <div class="step"><div class="n">1</div><div>A buyer and a seller agree on deliverables and acceptance criteria. The buyer locks payment in an <b>Alkahest</b> escrow on Base Sepolia, arbitrated by the official <i>TrustedOracleArbiter</i>.</div></div>
+  <div class="step"><div class="n">2</div><div>The same agreement and criteria open a case in the <b>DealJudge</b> intelligent contract on GenLayer. The seller delivers with an evidence package: a manifest, a pinned sha256 hash, and a public evidence note.</div></div>
+  <div class="step"><div class="n">3</div><div>If the buyer accepts, the case resolves to RELEASE with no judging. If the buyer disputes, DealJudge fetches the evidence, verifies the hash, and a leader/validator consensus judges each criterion → <b>RELEASE</b>, <b>REFUND</b>, or <b>UNDETERMINED</b>.</div></div>
+  <div class="step"><div class="n">4</div><div>A disclosed, trusted manual relay forwards the <i>recorded</i> verdict to the arbiter. RELEASE lets the seller collect; REFUND blocks collection and the buyer reclaims after expiry; UNDETERMINED is never relayed.</div></div>
+</div>
+
+<h2>GenLayer verdicts — all four paths proven on-chain</h2>
+
+<div class="card">
+  <b>Scenario A — buyer accepts.</b> Case <span class="mono">ce-accepted-1</span> on DealJudge v3 ·
+  <span class="verdict release">RESOLVED / RELEASE</span>
+  <p class="note">Delivered with complete evidence; the buyer accepted, so no judging was needed.</p>
+</div>
+
+<div class="card">
+  <b>Scenario C — disputed, incomplete evidence.</b> Case <span class="mono">ce-refund-1</span> on DealJudge v3 ·
+  <span class="verdict refund">RESOLVED / REFUND</span>
+  <ul class="criteria">
+    <li><span class="fail">FAIL</span> — delivery note lists all three deliverables</li>
+    <li><span class="fail">FAIL</span> — test summary stating all checks passed</li>
+    <li><span class="fail">FAIL</span> — license stated as MIT</li>
+  </ul>
+  <p class="note">Leader-generated explanation — non-authoritative: “The REFUND verdict is supported because the delivery note lists only the logo SVG and says the remaining work will follow later. It also omits a test summary stating all checks passed and an MIT license statement.”</p>
+</div>
+
+<div class="card">
+  <b>Scenario D — disputed, no evidence.</b> Case <span class="mono">ce-undet-1</span> on DealJudge v3 ·
+  <span class="verdict undet">RESOLVED / UNDETERMINED</span>
+  <p class="note">No evidence URL was provided, so the contract resolves deterministically without judging: “No evidence URL was provided; nothing to judge.” The verdict was never relayed to the escrow.</p>
+</div>
+
+<div class="card">
+  <b>Scenario B — disputed, complete evidence.</b> Case <span class="mono">ce-release-v4</span> on DealJudge v4
+  (<span class="mono">0xC4feD4c49aE86Ec1A9803694A0EA0E677a15C2F3</span>) ·
+  <span class="verdict release">RESOLVED / RELEASE</span>
+  <ul class="criteria">
+    <li><span class="pass">PASS</span> — delivery note lists all three deliverables</li>
+    <li><span class="pass">PASS</span> — test summary stating all checks passed</li>
+    <li><span class="pass">PASS</span> — license stated as MIT</li>
+  </ul>
+  <p class="note">Leader-generated explanation — non-authoritative: “The delivery note lists all three required deliverables, states that all checks passed, and specifies the MIT License.” Resolve tx <span class="mono">0x0cbdb85f3a7268c311b01786d6bc2b8d997a31706598189dc518cc16d5a6a4f9</span> (full leader/validator consensus).</p>
+</div>
+
+<h2>Base Sepolia settlement — the judged RELEASE, end-to-end</h2>
+<div class="card">
+  <table>
+    <tr><th>Step</th><th>Transaction</th></tr>
+    <tr><td>Escrow created (0.002 ETH, nested-encoded DemandData)</td><td class="mono">0xd964628726da796a5618d269d19510c8bd60c5553ace513d6980aa768a7a546f<br>UID 0xada1211f9b0dbe1e0337ab799b6022924f13eb2e54184f596af449af19dc53fd</td></tr>
+    <tr><td>Seller fulfillment (StringObligation)</td><td class="mono">0xd48b1be1b4c858b6e014287110d845e40dadc15ab9f4bd6d536b8079ec67a23b<br>UID 0xaf496a9d3b5f03e6ba92e5928c5b82523c35ef21707ca73c976ddf929e8f950c</td></tr>
+    <tr><td>Oracle arbitration — verdict RELEASE forwarded</td><td class="mono">0xc726dccd36c209dcff67f5b38aeb01175e737736b37169cf3a9ff8fb74f8de33</td></tr>
+    <tr><td><b>Seller collect</b></td><td class="mono">0x245dedc61ce391e8c21585581b2beef59e5256eaadd1eec378558238174db781</td></tr>
+  </table>
+  <p>Seller balance before collect: 0.00999545 ETH → after: <b>0.01199545 ETH (exactly +0.002 ETH)</b>; the escrow attestation was revoked by the collect. Buyer reclaims of the expired REFUND and UNDETERMINED escrows also succeeded (0.002 ETH each, txs in <span class="mono">demo/results.json</span>).</p>
+</div>
+
+<h2>Engineering notes — what the chain taught us</h2>
+<div class="card">
+  <p><b>Evidence representation matters.</b> DealJudge v3 pinned evidence by sha256 but fetched it with <span class="mono">gl.nondet.web.render</span>, which normalizes text (706 raw chars became 703) — the hash could never match. A dedicated on-chain diagnostic contract (<i>RenderProbe</i>) proved it; v4 fetches the raw body with <span class="mono">gl.nondet.web.get</span>, gates on HTTP status 200, and hashes the full body.</p>
+  <p><b>ABI encoding has two shapes.</b> The Alkahest arbiter decodes the escrow demand as <span class="mono">abi.encode(DemandData)</span> — the nested tuple encoding with its outer offset word. Two early escrows used the flat <span class="mono">abi.encode(address, bytes)</span> form; their demands cannot be decoded, so they can never be collected (0.002 ETH each, reclaimable by the buyer after expiry ~27 Nov 2026). The corrected escrow above uses the nested form.</p>
+  <p><b>Trust assumptions, disclosed.</b> The relay between GenLayer and Base Sepolia is a trusted manual operator step: it forwards only the verdict read from <span class="mono">get_case()</span>, never a UI or log claim, and never forces UNDETERMINED. Roles are played by separate testnet accounts per chain (disclosed in <span class="mono">demo/run-state.json</span>). Testnets only; no real funds.</p>
+</div>
+
+<p class="note">Repository: github.com/Arpan2112/court-escrow · Contracts lint clean, 79/79 direct-mode tests pass · Report generated from verified on-chain records, 21 Nov 2026.</p>
+
+</div>
+</body>
+</html>
