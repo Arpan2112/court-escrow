@@ -60,6 +60,40 @@ def test_open_case_happy(direct_vm, direct_deploy, direct_alice, direct_bob):
     assert contract.get_case_count() == 1
 
 
+def test_open_case_seller_as_int(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Regression (found on Studio Next, 20 Nov): the Studio encodes
+    Address arguments as uint256 integers in calldata, and the first
+    deployed build crashed in Address(int). open_case must normalize an
+    integer seller to the same stored address."""
+    contract = _deploy(direct_deploy)
+    direct_vm.sender = direct_alice
+    contract.open_case("case-int", int(to_hex(direct_bob), 16), AGREEMENT, CRITERIA)
+    case = contract.get_case("case-int")
+    assert case["status"] == "OPEN"
+    assert case["seller"] == to_hex(direct_bob)
+
+
+def test_open_case_seller_input_boundaries(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Boundary matrix for the seller normalization (ChatGPT v3 audit):
+    Address / hex string / valid int / leading-zero int pass; bool,
+    negative int, oversized int, garbage string, and wrong-length bytes
+    are all rejected."""
+    contract = _deploy(direct_deploy)
+    direct_vm.sender = direct_alice
+    # native Address object
+    contract.open_case("b-addr", direct_bob, AGREEMENT, CRITERIA)
+    assert contract.get_case("b-addr")["seller"] == to_hex(direct_bob)
+    # integer whose 20-byte form has a leading zero byte
+    lz_hex = "0x00" + "11" * 19
+    contract.open_case("b-lz", int(lz_hex, 16), AGREEMENT, CRITERIA)
+    assert contract.get_case("b-lz")["seller"] == lz_hex
+    # malformed inputs must be rejected, never stored
+    for bad in (True, -1, 1 << 160, "not-an-address", b"\x11" * 19, b"\x11" * 21):
+        with pytest.raises(Exception):
+            contract.open_case("b-bad", bad, AGREEMENT, CRITERIA)
+    assert contract.get_case_count() == 2
+
+
 def test_open_case_validations(direct_vm, direct_deploy, direct_alice, direct_bob):
     contract = _deploy(direct_deploy)
     direct_vm.sender = direct_alice
@@ -98,6 +132,15 @@ def test_delivery_url_restrictions(direct_vm, direct_deploy, direct_alice, direc
         contract.submit_delivery("case-1", "m", "hash:x", "http://example.com/audit-report", "")
     with pytest.raises(Exception):
         contract.submit_delivery("case-1", "m", "hash:x", EVIDENCE_URL, "not-a-hash")
+    # hash is mandatory when a URL is present (audit patch)
+    with pytest.raises(Exception):
+        contract.submit_delivery("case-1", "m", "hash:x", EVIDENCE_URL, "")
+    # 64 chars but not hexadecimal must not pass as a sha256 hash
+    with pytest.raises(Exception):
+        contract.submit_delivery("case-1", "m", "hash:x", EVIDENCE_URL, "g" * 64)
+    # a hash without a URL is meaningless and rejected
+    with pytest.raises(Exception):
+        contract.submit_delivery("case-1", "m", "hash:x", "", EVIDENCE_HASH)
     assert contract.get_case("case-1")["status"] == "OPEN"
 
 
@@ -174,7 +217,8 @@ def test_fetch_failure_keeps_disputed(direct_vm, direct_deploy, direct_alice, di
 def test_empty_evidence_page_keeps_disputed(direct_vm, direct_deploy, direct_alice, direct_bob):
     contract = _deploy(direct_deploy)
     _open(direct_vm, contract, direct_alice, direct_bob)
-    _deliver(direct_vm, contract, direct_bob, ev_hash="")
+    empty_hash = hashlib.sha256("".encode("utf-8")).hexdigest()
+    _deliver(direct_vm, contract, direct_bob, ev_hash=empty_hash)
     _dispute(direct_vm, contract, direct_alice)
     direct_vm.mock_web(r".*example\.com/audit-report.*", {"status": 200, "body": "   "})
     direct_vm.sender = direct_alice
