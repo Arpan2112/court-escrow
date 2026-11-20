@@ -129,8 +129,25 @@ class DealJudge(gl.Contract):
         if case_id in self.cases:
             raise gl.vm.UserError("case already exists")
         buyer = gl.message.sender_address
-        if not isinstance(seller, Address):
-            seller = Address(seller)
+        # Some clients (notably the Studio) encode Address arguments as
+        # uint256 integers in calldata, and the GenVM Address constructor
+        # cannot build an address from a bare int — normalize explicitly
+        # and reject malformed inputs with a clean error.
+        if isinstance(seller, Address):
+            pass
+        elif isinstance(seller, bool):
+            raise gl.vm.UserError("invalid seller address")
+        elif isinstance(seller, int):
+            if seller < 0 or seller >= (1 << 160):
+                raise gl.vm.UserError("invalid seller address")
+            seller = Address(seller.to_bytes(20, "big"))
+        elif isinstance(seller, (str, bytes)):
+            try:
+                seller = Address(seller)
+            except Exception:
+                raise gl.vm.UserError("invalid seller address")
+        else:
+            raise gl.vm.UserError("invalid seller address")
         if seller == buyer:
             raise gl.vm.UserError("buyer and seller must differ")
         if not agreement or len(agreement) > MAX_AGREEMENT_LEN:
