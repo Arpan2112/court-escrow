@@ -19,7 +19,7 @@ Combine three existing layers, each doing the one job it is good at:
 |---|---|
 | **Arkhai / Alkahest** (partner) | Conditional escrow on Base Sepolia: locks the payment, holds the fulfillment obligation (`StringObligation`), enforces the outcome via its `TrustedOracleArbiter`. |
 | **Evidence package** (EvidenceGuard component) | Makes the delivery *judgeable*: manifest + content hash + evidence references, checked for internal consistency before any judging. A hash proves integrity of the package, not truth of its claims — stated openly. |
-| **GenLayer** (adjudication, Internet Court pattern) | An intelligent contract (`DealJudge`) evaluates the delivery against the acceptance rubric agreed *before* the dispute — consensus (`gl.eq_principle.strict_eq`) covers only the verdict token — and returns one of three verdicts: `RELEASE`, `REFUND`, or `UNDETERMINED`. |
+| **GenLayer** (adjudication, Internet Court pattern) | An intelligent contract (`DealJudge`) evaluates the delivery against the acceptance rubric agreed *before* the dispute — consensus (a `gl.vm.run_nondet_unsafe` leader/validator block in which each validator independently re-fetches, re-verifies, and re-judges the evidence) covers only the verdict token — and returns one of three verdicts: `RELEASE`, `REFUND`, or `UNDETERMINED`. |
 
 A **manual demo relay** (trusted operator, disclosed — not a bridge) forwards the
 GenLayer verdict to the Alkahest `TrustedOracleArbiter`:
