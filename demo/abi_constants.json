@@ -1,0 +1,13 @@
+{
+ "sel_escrow_doObligation": "0x9d76101d",
+ "sel_string_doObligation": "0x173c9e08",
+ "sel_arbitrate": "0xfcb0c390",
+ "sel_collect": "0xea6ec49c",
+ "sel_reclaim": "0x96afb365",
+ "topic_attested": "0x8bf46bf4cfd674fa735a3d63ec1c9ad4153f033c290341f3a588b75685141b35",
+ "topic_escrow_made": "0x8f7f2dbafd79125e808bf16a53d7fa4e17b8b6374ced76d946a45f94b7bf4d06",
+ "topic_escrow_collected": "0xf96e77bc177ae8e2ff25185e7c6d85f8ba97c8bdd9d46933aac70a7a33edf6c0",
+ "topic_escrow_reclaimed": "0x655ef333d5efcbf5aa343f02bcd9e3539f9c9f9ee8b9cfa7d8910b1bd7e0a832",
+ "topic_arbitration_made": "0xbbe9caf8b56a2139bcb80c791657954e2e1ddfad0cf3725d0ce16838a46752d1",
+ "schema_tag_delivery": "0x68fe0fba524b9ab95057eee87c3caeb99cc9e03548d7cf3e6129b9cd9ddbd0e5"
+}
