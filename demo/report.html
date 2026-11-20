@@ -88,6 +88,17 @@ Trust the agreement. Verify the delivery. Resolve the dispute.</p>
   <p class="note">Leader-generated explanation — non-authoritative: “The delivery note lists all three required deliverables, states that all checks passed, and specifies the MIT License.” Resolve tx <span class="mono">0x0cbdb85f3a7268c311b01786d6bc2b8d997a31706598189dc518cc16d5a6a4f9</span> (full leader/validator consensus).</p>
 </div>
 
+<div class="card">
+  <b>Scenario C′ — disputed, incomplete evidence, on v4 with corrected encoding.</b> Case <span class="mono">ce-refund-v4</span> on DealJudge v4 ·
+  <span class="verdict refund">RESOLVED / REFUND</span>
+  <ul class="criteria">
+    <li><span class="fail">FAIL</span> — delivery note lists all three deliverables</li>
+    <li><span class="fail">FAIL</span> — test summary stating all checks passed</li>
+    <li><span class="fail">FAIL</span> — license stated as MIT</li>
+  </ul>
+  <p class="note">Leader-generated explanation — non-authoritative: “The REFUND verdict is supported because the delivery note lists only the logo SVG and says the remaining work will follow later. It also lacks a test summary stating all checks passed and an MIT license statement.” Its Base Sepolia settlement is detailed below.</p>
+</div>
+
 <h2>Base Sepolia settlement — the judged RELEASE, end-to-end</h2>
 <div class="card">
   <table>
@@ -98,6 +109,20 @@ Trust the agreement. Verify the delivery. Resolve the dispute.</p>
     <tr><td><b>Seller collect</b></td><td class="mono">0x245dedc61ce391e8c21585581b2beef59e5256eaadd1eec378558238174db781</td></tr>
   </table>
   <p>Seller balance before collect: 0.00999545 ETH → after: <b>0.01199545 ETH (exactly +0.002 ETH)</b>; the escrow attestation was revoked by the collect. Buyer reclaims of the expired REFUND and UNDETERMINED escrows also succeeded (0.002 ETH each, txs in <span class="mono">demo/results.json</span>).</p>
+</div>
+
+<h2>Base Sepolia settlement — the judged REFUND, with corrected encoding</h2>
+<div class="card">
+  <table>
+    <tr><th>Step</th><th>Transaction</th></tr>
+    <tr><td>Escrow created (0.002 ETH, nested-encoded DemandData, 1-hour expiry)</td><td class="mono">0x44243ce7d9708c4bf5aefe91166a19d6fbc3c48c62ba68d4afa4be64b09e9919<br>UID 0x92435177e88c56710c488cd887c3b4c06eafcb86bea7a711722c702edea1dee0</td></tr>
+    <tr><td>Seller fulfillment (StringObligation)</td><td class="mono">0xa44c46dc6f4d0333642f8f3643e2a4c53c86777b46280c681d9ec74f1217a780<br>UID 0xed83bee8c4cf71fdc9fb60a6658c85fa5872fce4a7172f62f3ba929077586ef4</td></tr>
+    <tr><td>Oracle arbitration — verdict REFUND forwarded</td><td class="mono">0x024caa364bec099adb7953635cb7bfdb1ec6af4a5fa1b566f9b701232cd61a42</td></tr>
+    <tr><td>Arbiter check</td><td><b>FALSE</b> — returned cleanly, no revert</td></tr>
+    <tr><td>Seller collect attempt (simulated)</td><td>Reverts with <span class="mono">InvalidFulfillment</span> — the seller cannot collect on a REFUND</td></tr>
+    <tr><td>Buyer reclaim after expiry</td><td>Recorded in <span class="mono">demo/results.json</span></td></tr>
+  </table>
+  <p class="note">By Alkahest's design, a REFUND does not transfer funds at arbitration time: the seller is blocked from collecting, and the buyer reclaims the escrowed amount after expiry.</p>
 </div>
 
 <h2>Engineering notes — what the chain taught us</h2>
