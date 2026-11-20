@@ -97,6 +97,8 @@ hash and UID.
 | Disputed, no evidence | Case `ce-undet-1` → `UNDETERMINED` (deterministic), never relayed |
 | Disputed, complete evidence | Case `ce-release-v4` → `RELEASE` by full consensus, all 3 criteria PASS |
 | Alkahest settlement of the judged RELEASE | Escrow `0xada1211f…53fd` → fulfillment → `arbitrate(true)` → seller **collect succeeded** (tx `0x245dedc6…b781`, seller +0.002 ETH) |
+| Disputed, incomplete evidence (v4, corrected encoding) | Case `ce-refund-v4` → `REFUND` by full consensus, all 3 criteria FAIL |
+| Alkahest settlement of the judged REFUND | Escrow `0x92435177…dee0` → `arbitrate(false)` → `check()` returns FALSE → seller collect blocked (`InvalidFulfillment`) → buyer reclaim after expiry |
 | Buyer reclaim of expired escrows | `ce-refund-1` and `ce-undet-1` escrows reclaimed in full |
 
 One integration lesson worth recording: the Alkahest arbiter decodes
