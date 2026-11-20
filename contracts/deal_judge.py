@@ -114,8 +114,19 @@ class DealJudge(gl.Contract):
     def _fetch_evidence(self, url: str) -> str:
         # Runs inside the consensus step. Any failure raises, aborting the
         # resolution and leaving the case DISPUTED (retryable).
+        #
+        # The fetch uses web.get (raw body), NOT web.render: a live probe
+        # (RenderProbe, 20 Nov 2026) proved web.render normalizes the text
+        # (703 chars vs the raw file's 706 for delivery-complete.md), so a
+        # sha256 pinned over the raw file can never match the rendered
+        # representation. web.get returns the exact bytes clients pin.
         try:
-            content = gl.nondet.web.render(url, mode="text")
+            resp = gl.nondet.web.get(url)
+            body = resp.body
+            if isinstance(body, bytes):
+                content = body.decode("utf-8")
+            else:
+                content = str(body)
         except Exception:
             raise gl.vm.UserError("evidence retrieval failed; case remains disputed")
         if not content or not content.strip():
@@ -283,9 +294,10 @@ class DealJudge(gl.Contract):
         def leader_fn() -> dict:
             content = self._fetch_evidence(evidence_url)
             if evidence_hash:
-                # The pinned hash is over the fetched content as truncated
-                # by _fetch_evidence (MAX_CONTENT_CHARS) — clients must pin
-                # sha256 of that same representation.
+                # The pinned hash is over the RAW response body as fetched
+                # by _fetch_evidence (web.get) and truncated to
+                # MAX_CONTENT_CHARS — clients must pin sha256 of that same
+                # raw representation (never of a browser-rendered text).
                 digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
                 if digest != evidence_hash:
                     raise gl.vm.UserError(
