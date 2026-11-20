@@ -24,7 +24,7 @@ studio_dev = GenLayerChain(
 )
 
 EVIDENCE_GUARD = "0x45f7Fe4DA9640457c9411b736E262675DF011A64"
-DEAL_JUDGE = "0x605AEdC0f6F2a07d9CD581a2fDc1d140E2742DeB"  # patched build (mandatory evidence hash)
+DEAL_JUDGE = "0xC4feD4c49aE86Ec1A9803694A0EA0E677a15C2F3"  # patched build (mandatory evidence hash)
 
 client = create_client(chain=studio_dev, account=create_account())
 print("EvidenceGuard.get_check_count =", client.read_contract(address=EVIDENCE_GUARD, function_name="get_check_count", args=[]))
