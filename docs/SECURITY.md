@@ -53,10 +53,17 @@ attacker-controlled (a seller chooses the evidence URL). Defences:
    the fetched content and aborts on mismatch (page swapped after
    delivery = failed retrieval = case stays DISPUTED). The hash is over
    the content as fetched and truncated to 6,000 chars — clients must
-   pin the hash of that same representation. Note: redirect behaviour
-   is a property of the GenVM web renderer, not something the contract
-   can inspect; the allowlist binds the submitted URL and the hash pins
-   the content actually judged.
+   pin the hash of that same representation. **Representation rule
+   (learned live, 20 Nov 2026):** the fetch uses `gl.nondet.web.get`
+   (raw response body), never `web.render`. A dedicated probe contract
+   (RenderProbe) proved that `web.render` normalizes text — for the
+   demo's delivery-complete.md it returned 703 chars against the raw
+   file's 706, so a raw-file pin could never verify and every judged
+   resolution of that case aborted deterministically. Clients pin the
+   sha256 of the raw file bytes (UTF-8), exactly what `web.get`
+   returns. Note: redirect behaviour is a property of the GenVM web
+   layer, not something the contract can inspect; the allowlist binds
+   the submitted URL and the hash pins the content actually judged.
 8. **Role checks.** Delivery only by the seller, dispute/accept only by
    the buyer, resolution only by a party to the case. State machine is
    enforced (`OPEN → DELIVERED → DISPUTED → RESOLVED`, or
