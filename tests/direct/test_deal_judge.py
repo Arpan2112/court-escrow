@@ -269,6 +269,86 @@ def test_genuine_undetermined_from_judge(direct_vm, direct_deploy, direct_alice,
     assert case["verdict"] == "UNDETERMINED"
 
 
+def test_validator_agrees_with_leader_release(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Consensus gate 1: leader RELEASE, validator independently judges
+    RELEASE -> validator accepts."""
+    contract = _deploy(direct_deploy)
+    _open(direct_vm, contract, direct_alice, direct_bob)
+    _deliver(direct_vm, contract, direct_bob)
+    _dispute(direct_vm, contract, direct_alice)
+    _mock_judge(direct_vm, "RELEASE")
+    direct_vm.sender = direct_alice
+    contract.resolve_case("case-1")
+    assert contract.get_case("case-1")["verdict"] == "RELEASE"
+    assert direct_vm.run_validator() is True
+
+
+def test_validator_agrees_with_leader_refund(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Consensus gate 2: leader REFUND, validator REFUND -> accepts."""
+    contract = _deploy(direct_deploy)
+    _open(direct_vm, contract, direct_alice, direct_bob)
+    _deliver(direct_vm, contract, direct_bob)
+    _dispute(direct_vm, contract, direct_alice)
+    _mock_judge(direct_vm, "REFUND")
+    direct_vm.sender = direct_alice
+    contract.resolve_case("case-1")
+    assert contract.get_case("case-1")["verdict"] == "REFUND"
+    assert direct_vm.run_validator() is True
+
+
+def test_validator_rejects_verdict_mismatch(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Consensus gate 3: the leader's proposed verdict (REFUND) differs
+    from the validator's own independent judgment (RELEASE) -> the
+    validator rejects, so on-chain the resolution would not apply."""
+    contract = _deploy(direct_deploy)
+    _open(direct_vm, contract, direct_alice, direct_bob)
+    _deliver(direct_vm, contract, direct_bob)
+    _dispute(direct_vm, contract, direct_alice)
+    _mock_judge(direct_vm, "RELEASE")
+    direct_vm.sender = direct_alice
+    contract.resolve_case("case-1")
+    forged = {"verdict": "REFUND", "criteria_results": "", "summary": ""}
+    assert direct_vm.run_validator(leader_result=forged) is False
+
+
+def test_explanation_failure_keeps_verdict(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Consensus gate 4: the clerk/explanation LLM call returns garbage;
+    the verdict still resolves and the explanation is stored empty."""
+    contract = _deploy(direct_deploy)
+    _open(direct_vm, contract, direct_alice, direct_bob)
+    _deliver(direct_vm, contract, direct_bob)
+    _dispute(direct_vm, contract, direct_alice)
+    direct_vm.mock_web(r".*example\.com/audit-report.*", {"status": 200, "body": EVIDENCE_BODY})
+    # clerk mock registered FIRST so it wins for the explanation prompt
+    direct_vm.mock_llm(r".*adjudicator's clerk.*", "THIS IS NOT JSON")
+    direct_vm.mock_llm(r".*impartial adjudicator.*", json.dumps({"verdict": "RELEASE"}))
+    direct_vm.sender = direct_alice
+    contract.resolve_case("case-1")
+    case = contract.get_case("case-1")
+    assert case["status"] == "RESOLVED"
+    assert case["verdict"] == "RELEASE"
+    assert case["summary"] == ""
+    assert case["criteria_results_json"] == ""
+
+
+def test_validator_fetch_failure_rejects(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Consensus gate 6: the evidence endpoint dies between the leader's
+    run and validation; the validator cannot verify, so it rejects
+    (raises) instead of accepting the leader's verdict."""
+    contract = _deploy(direct_deploy)
+    _open(direct_vm, contract, direct_alice, direct_bob)
+    _deliver(direct_vm, contract, direct_bob)
+    _dispute(direct_vm, contract, direct_alice)
+    _mock_judge(direct_vm, "RELEASE")
+    direct_vm.sender = direct_alice
+    contract.resolve_case("case-1")
+    direct_vm.clear_mocks()
+    direct_vm.mock_web(r".*example\.com/audit-report.*", {"status": 503, "body": "Service Unavailable"})
+    direct_vm.mock_llm(r".*impartial adjudicator.*", json.dumps({"verdict": "RELEASE"}))
+    with pytest.raises(Exception):
+        direct_vm.run_validator()
+
+
 def test_state_machine_guards(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie):
     contract = _deploy(direct_deploy)
     _open(direct_vm, contract, direct_alice, direct_bob)
