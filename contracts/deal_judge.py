@@ -111,27 +111,43 @@ class DealJudge(gl.Contract):
                 raise gl.vm.UserError("each criterion must be a string of 1-200 characters")
         return criteria
 
-    def _fetch_evidence(self, url: str) -> str:
+    def _fetch_evidence(self, url: str):
         # Runs inside the consensus step. Any failure raises, aborting the
         # resolution and leaving the case DISPUTED (retryable).
         #
-        # The fetch uses web.get (raw body), NOT web.render: a live probe
-        # (RenderProbe, 20 Nov 2026) proved web.render normalizes the text
-        # (703 chars vs the raw file's 706 for delivery-complete.md), so a
-        # sha256 pinned over the raw file can never match the rendered
-        # representation. web.get returns the exact bytes clients pin.
+        # Returns (judge_text, body_digest): the decoded content truncated
+        # to MAX_CONTENT_CHARS for the judge prompt, and the sha256 of the
+        # FULL raw response body for the integrity check.
+        #
+        # Representation + integrity rules (hardened after the RenderProbe
+        # diagnosis and an external audit round, 20 Nov 2026):
+        # - web.get (raw body), NOT web.render: a live probe proved render
+        #   normalizes the text (703 chars vs the raw file's 706 for
+        #   delivery-complete.md), so a sha256 pinned over the raw file
+        #   could never match the rendered representation.
+        # - The HTTP status must be 200; an error page is not evidence.
+        # - The body must be non-empty bytes and valid UTF-8; anything
+        #   else is rejected, never coerced.
+        # - The digest is over the full body BEFORE truncation; the
+        #   truncation only limits what the judge reads.
         try:
             resp = gl.nondet.web.get(url)
+            status = resp.status
             body = resp.body
-            if isinstance(body, bytes):
-                content = body.decode("utf-8")
-            else:
-                content = str(body)
         except Exception:
             raise gl.vm.UserError("evidence retrieval failed; case remains disputed")
-        if not content or not content.strip():
+        if status != 200:
+            raise gl.vm.UserError("evidence HTTP request failed; case remains disputed")
+        if not isinstance(body, bytes) or not body:
+            raise gl.vm.UserError("invalid evidence response body; case remains disputed")
+        digest = hashlib.sha256(body).hexdigest()
+        try:
+            content = body.decode("utf-8")
+        except Exception:
+            raise gl.vm.UserError("evidence is not valid UTF-8; case remains disputed")
+        if not content.strip():
             raise gl.vm.UserError("evidence returned no content; case remains disputed")
-        return content[:MAX_CONTENT_CHARS]
+        return content[:MAX_CONTENT_CHARS], digest
 
     # ---------- writes ----------
 
@@ -292,13 +308,12 @@ class DealJudge(gl.Contract):
         # output aborts the transaction, so the case stays DISPUTED and
         # can be resolved again later. ---
         def leader_fn() -> dict:
-            content = self._fetch_evidence(evidence_url)
+            content, digest = self._fetch_evidence(evidence_url)
             if evidence_hash:
-                # The pinned hash is over the RAW response body as fetched
-                # by _fetch_evidence (web.get) and truncated to
-                # MAX_CONTENT_CHARS — clients must pin sha256 of that same
-                # raw representation (never of a browser-rendered text).
-                digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+                # The pinned hash is over the FULL raw response body
+                # (web.get), computed by _fetch_evidence before any
+                # truncation — clients pin sha256 of the raw file bytes,
+                # never of a browser-rendered text.
                 if digest != evidence_hash:
                     raise gl.vm.UserError(
                         "evidence content does not match the delivery-time hash; case remains disputed"
@@ -374,9 +389,8 @@ Respond with ONLY this JSON:
             # then judge it independently. A fetch failure or hash
             # mismatch raises, which the VM treats as disagreement — the
             # leader's result is not applied and the case stays DISPUTED.
-            content = self._fetch_evidence(evidence_url)
+            content, digest = self._fetch_evidence(evidence_url)
             if evidence_hash:
-                digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
                 if digest != evidence_hash:
                     raise gl.vm.UserError(
                         "evidence content does not match the delivery-time hash; case remains disputed"
